@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# 本地价表（含真实单价，不进仓库）
+pricebook.json
+.tiechi/
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store
