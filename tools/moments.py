@@ -3,6 +3,13 @@
 moments —— 生成朋友圈四宫格（1080×1080 @2x）
 ==========================================
 版式沿用仓库里的数据表风格：纸白底、细线、等宽数字。数字全部由引擎现算。
+
+叙事线（v3，对齐"模糊才是利润来源"的口径）：
+  1 报价单上缺的那几行      —— 提出问题：总价是确定的，其余全空着
+  2 缺的三个数字值多少      —— 洞口 2.10㎡ / 展开 3.47㎡，同价两种单价差 1.65 倍
+  3 同一句话，差 423 元     —— 工艺口径不明，差价藏在"单包"这句里
+  4 七项成本，逐项带算式    —— 把洞填上
+
     python tools/moments.py
 """
 import os
@@ -44,6 +51,8 @@ h2{font-size:44px;font-weight:600;line-height:1.35}
 .rule{height:1px;background:var(--line);margin:26px 0}
 .foot{position:absolute;left:64px;right:64px;bottom:44px;font-size:19px;color:var(--mute);
   border-top:1px solid var(--line);padding-top:16px;display:flex;justify-content:space-between}
+.blank{display:inline-block;border-bottom:2px dashed var(--line);width:132px;height:2px;
+  vertical-align:middle;margin-bottom:6px}
 """
 
 
@@ -55,128 +64,36 @@ def card(body, left, right="tiechi · MIT"):
 
 # ------------------------------------------------------------------ 1 封面
 def c1():
+    def line(name, val, fixed=False):
+        return f"""
+      <div style="display:flex;justify-content:space-between;align-items:baseline;
+                  padding:17px 0;border-bottom:1px solid var(--line);">
+        <div style="font-size:27px;{'font-weight:600' if fixed else 'color:var(--mute)'}">{name}</div>
+        <div class="mono" style="font-size:{31 if fixed else 25}px;
+             {'color:var(--ink)' if fixed else 'color:var(--mute)'}">{val}</div>
+      </div>"""
+
     body = f"""
   <div class="kicker">T I E C H I</div>
-  <h1 style="margin-top:34px;">报一个价，<br>得拿得出算式。</h1>
-  <div class="sub" style="margin-top:30px;">
-    门套 · 窗套 · 装饰线条<br>七项成本 · 展开几何 · 工艺告警
+  <h1 style="margin-top:30px;">报价单上<br>缺的那几行。</h1>
+  <div style="margin-top:46px;border:1px solid var(--line);background:#fff;padding:8px 30px 22px;">
+    <div class="mono" style="font-size:19px;color:var(--mute);padding:16px 0 8px;
+         border-bottom:2px solid var(--ink);letter-spacing:.12em;">不锈钢门套报价单 · 1000×2100</div>
+    {line("展开面积", '<span class="blank"></span> ㎡')}
+    {line("焊缝米数", '<span class="blank"></span> m')}
+    {line("损耗率", '<span class="blank"></span> %')}
+    {line("单价口径", "按洞口 / 按展开")}
+    {line("总价", f"￥{A['单套报价']:,.0f}", fixed=True)}
   </div>
-  <div style="margin-top:56px;border:1px solid var(--line);padding:26px 28px;background:#fff;">
-    <div class="mono" style="font-size:21px;color:var(--mute);">$ tiechi quote --w 1000 --h 2100 --d 240</div>
-    <div class="mono" style="font-size:28px;margin-top:16px;">总成本 ￥{A['总成本']:,.2f}</div>
-    <div class="mono" style="font-size:28px;margin-top:8px;">
-      报　价 ￥{A['建议报价合计']:,.0f}
-      <span style="color:var(--rust);font-size:22px;">利润率 {A['实际利润率']*100:.1f}%</span>
-    </div>
-  </div>
-  <div style="margin-top:44px;font-size:23px;line-height:2;color:var(--mute);">
-    31 条断言 · 移植自一套在用的生产报价系统<br>
-    开源前做过逐位对照：6 样例 × 8 字段，差异 0
+  <div style="margin-top:34px;font-size:25px;line-height:1.85;">
+    五个格子里，只有一个数是真的。<br>
+    <span style="color:var(--rust);">缺的那四行，正好是能验算的那四行。</span>
   </div>"""
     return card(body, "github.com/Mr-Jino/tiechi", "纯 Python · 无依赖")
 
 
-# ------------------------------------------------------------------ 2 成本
+# ------------------------------------------------------------ 2 缺的三个数字
 def c2():
-    items = sorted([(k, v) for k, v in A["成本明细"].items() if v > 0], key=lambda x: -x[1])
-    total = A["总成本"]
-    rows = "".join(f"""
-      <div style="display:grid;grid-template-columns:150px 1fr 138px;align-items:center;gap:16px;margin-bottom:22px;">
-        <div style="font-size:27px;">{k}</div>
-        <div style="position:relative;height:30px;background:var(--sand);">
-          <div style="position:absolute;inset:0 auto 0 0;width:{v/total*100:.2f}%;
-                      background:{'var(--rust)' if v/total > 0.2 else 'var(--blue)'};"></div>
-        </div>
-        <div class="mono" style="font-size:25px;text-align:right;">{v:,.2f}</div>
-      </div>""" for k, v in items)
-    body = f"""
-  <h2>一件门套，钱花在哪</h2>
-  <div class="sub" style="margin-top:14px;font-size:23px;">
-    1000×2100 · 墙厚 240 · 304/1.0 · 拉丝 · 双包 · 拼焊
-  </div>
-  <div class="rule"></div>
-  {rows}
-  <div style="display:flex;justify-content:space-between;align-items:baseline;
-              border-top:2px solid var(--ink);margin-top:20px;padding-top:18px;">
-    <div style="font-size:30px;">总成本</div>
-    <div class="mono" style="font-size:52px;">￥{total:,.2f}</div>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;">
-    <div style="font-size:22px;color:var(--mute);">× (1 + 加成 30%)，取整到元</div>
-    <div class="mono" style="font-size:34px;color:var(--rust);">报价 ￥{A['建议报价合计']:,.0f}</div>
-  </div>"""
-    return card(body, "材料含算料损耗 · 物流泡重取大")
-
-
-# ------------------------------------------------------------------ 3 工艺
-def c3():
-    def block(r, name, note, color, big):
-        g = r["几何"]
-        return f"""
-      <div style="flex:1;border:1px solid var(--line);padding:26px 26px 22px;background:#fff;">
-        <div style="display:flex;align-items:baseline;gap:12px;">
-          <div style="font-size:32px;font-weight:700;color:{color}">{name}</div>
-          <div style="font-size:20px;color:var(--mute)">{note}</div>
-        </div>
-        <div class="mono" style="font-size:{big}px;margin-top:14px;">￥{r['单套报价']:,.0f}</div>
-        <div style="margin-top:14px;font-size:21px;color:var(--mute);line-height:2;" class="mono">
-          展开 {g['单套展开面积㎡']:.3f} ㎡<br>
-          拼角 {r['工艺口径']['拼角处数']} 处 · 接料 {g['拼板接料处数']} 处<br>
-          焊缝 {r['工艺口径']['焊缝米数']:.3f} m
-        </div>
-      </div>"""
-
-    d_cost = ZB["总成本"] - PZ["总成本"]
-    body = f"""
-  <h2>同一洞口，改整包多付 {d_cost:,.0f} 元</h2>
-  <div class="sub" style="margin-top:12px;font-size:23px;">同为单包口径，变量只有工艺</div>
-  <div style="display:flex;gap:22px;margin-top:32px;">
-    {block(PZ, "拼焊", "分件下料 · 拼角焊", "var(--ink)", 44)}
-    {block(ZB, "整包", "一块板折成 П 形", "var(--blue)", 44)}
-  </div>
-  <div style="margin-top:30px;font-size:23px;line-height:1.95;">
-    买的是"没有拼角焊缝"。<br>
-    <span style="color:var(--mute);">代价：整包板长 2×2100+1000+2×240+30 = 5710mm，<br>
-    标准板最长 3000mm，必然接料 —— 所以整包不是"高端就选它"。</span>
-  </div>"""
-    return card(body, "值不值由客户定，但价格得报得出来")
-
-
-# ------------------------------------------------------------------ 4 加成
-def c4():
-    cost, price = A["总成本"], A["建议报价合计"]
-    p30 = cost / 0.7
-    def bar(label, p, expr, real, top):
-        return f"""
-      <div style="margin-top:{top}px;">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;">
-          <div style="font-size:25px;">{label}</div>
-          <div class="mono" style="font-size:28px;">￥{p:,.2f}</div>
-        </div>
-        <div style="display:flex;height:34px;margin-top:12px;">
-          <div style="width:{cost/p*100:.1f}%;background:var(--ink);"></div>
-          <div style="width:{(p-cost)/p*100:.1f}%;background:var(--rust);opacity:.75;"></div>
-        </div>
-        <div class="mono" style="font-size:19px;color:var(--mute);margin-top:9px;">
-          {expr} · 实际利润率 {real:.1f}%
-        </div>
-      </div>"""
-    body = f"""
-  <h2>加成 30% 不是利润 30%</h2>
-  <div class="sub" style="margin-top:12px;font-size:23px;">行业里最常见的报亏原因</div>
-  <div class="mono" style="font-size:76px;margin-top:36px;">0.30 <span style="color:var(--mute);font-size:44px;">÷ 1.30</span>
-    <span style="color:var(--rust)">= 23.1%</span></div>
-  {bar("成本加成 30%", price, "成本 × 1.30", (price-cost)/price*100, 34)}
-  {bar("按利润 30% 反算", p30, "成本 ÷ (1−0.30)", (p30-cost)/p30*100, 26)}
-  <div style="margin-top:32px;font-size:23px;line-height:1.9;">
-    同样的活，两个口径差 <b class="mono" style="color:var(--rust)">￥{p30-price:,.0f}</b> / 套<br>
-    <span style="color:var(--mute);">按 100 万成本量级，差 ￥{(p30-price)/cost*1e6:,.0f}，账上却一直是"赚的"。</span>
-  </div>"""
-    return card(body, "github.com/Mr-Jino/tiechi", "价表请自己回填")
-
-
-# ------------------------------------------------------------ 4b 缺的三个数字
-def c4b():
     g = A["几何"]
     hole = BASE["opening_w"] * BASE["opening_h"] / 1e6      # 洞口面积 ㎡
     dev = g["单套展开面积㎡"]
@@ -184,21 +101,21 @@ def c4b():
 
     def row(no, ask, val, unit, hidden):
         return f"""
-      <div style="border-top:1px solid var(--line);padding:26px 0 22px;">
+      <div style="border-top:1px solid var(--line);padding:24px 0 20px;">
         <div style="display:flex;align-items:baseline;gap:18px;">
-          <div class="mono" style="font-size:22px;color:var(--mute);width:34px;">{no}</div>
-          <div style="font-size:33px;font-weight:600;">{ask}</div>
+          <div class="mono" style="font-size:21px;color:var(--mute);width:34px;">{no}</div>
+          <div style="font-size:32px;font-weight:600;">{ask}</div>
           <div style="flex:1;"></div>
-          <div class="mono" style="font-size:44px;">{val}<span style="font-size:22px;color:var(--mute);"> {unit}</span></div>
+          <div class="mono" style="font-size:42px;">{val}<span style="font-size:22px;color:var(--mute);"> {unit}</span></div>
         </div>
-        <div class="mono" style="font-size:20px;color:var(--mute);margin-top:10px;padding-left:52px;">
+        <div class="mono" style="font-size:19px;color:var(--mute);margin-top:9px;padding-left:52px;">
           {hidden}
         </div>
       </div>"""
 
     rows = (
         row("01", "展开面积", f"{dev:.3f}", "㎡",
-            f"报价只写“按洞口 {hole:.2f} ㎡”—— 摊平后的面积是洞口的 {dev/hole:.2f} 倍")
+            f"报价只写“按洞口 {hole:.2f} ㎡”—— 摊平后是洞口的 {dev/hole:.2f} 倍")
         + row("02", "焊缝米数", f"{A['工艺口径']['焊缝米数']:.2f}", "m",
               f"报价只写“{A['工艺口径']['拼角处数']} 处拼角”—— 处不是长度，估不出焊接费")
         + row("03", "损耗率", f"{g['损耗率']*100:.0f}", "%",
@@ -207,23 +124,91 @@ def c4b():
     )
 
     body = f"""
-  <h2>一张报价单，缺三个数字</h2>
-  <div class="sub" style="margin-top:12px;font-size:23px;">缺了它们，总价是对的也是对的，错的也是对的</div>
+  <h2>缺的这三个数，值多少钱</h2>
+  <div class="sub" style="margin-top:12px;font-size:23px;">同一个价格，两种分母，1.65 倍</div>
   {rows}
-  <div style="border-top:2px solid var(--ink);padding-top:22px;margin-top:6px;">
+  <div style="border-top:2px solid var(--ink);padding-top:22px;margin-top:4px;">
     <div style="font-size:23px;line-height:1.95;">
       于是同一个 <span class="mono">￥{price:,.0f}</span>，可以写成
       <b class="mono" style="color:var(--rust)">￥{price/hole:,.0f}/㎡</b>（按洞口），<br>
-      也可以说成 <b class="mono" style="color:var(--rust)">￥{price/dev:,.0f}/㎡</b>（按展开）
-      —— 差 {dev/hole:.2f} 倍。<br>
-      <span style="color:var(--mute);">两家比单价，分母都不是一个东西，比的是笔误。</span>
+      也可以说成 <b class="mono" style="color:var(--rust)">￥{price/dev:,.0f}/㎡</b>（按展开）。<br>
+      <span style="color:var(--mute);">两家比单价，分母不是一个东西，比的是笔误。</span>
     </div>
   </div>"""
     return card(body, "三个都是硬数，一问就现形", "github.com/Mr-Jino/tiechi")
 
 
-CARDS = [("tiechi-1", c1), ("tiechi-2", c2), ("tiechi-3", c3),
-         ("tiechi-4", c4), ("tiechi-4b", c4b)]
+# ---------------------------------------------------------------- 3 工艺口径
+def c3():
+    def block(r, name, note, color):
+        g = r["几何"]
+        return f"""
+      <div style="flex:1;border:1px solid var(--line);padding:24px 26px 20px;background:#fff;">
+        <div style="display:flex;align-items:baseline;gap:12px;">
+          <div style="font-size:31px;font-weight:700;color:{color}">{name}</div>
+          <div style="font-size:19px;color:var(--mute)">{note}</div>
+        </div>
+        <div class="mono" style="font-size:42px;margin-top:12px;">￥{r['单套报价']:,.0f}</div>
+        <div style="margin-top:12px;font-size:20px;color:var(--mute);line-height:2;" class="mono">
+          展开 {g['单套展开面积㎡']:.3f} ㎡<br>
+          拼角 {r['工艺口径']['拼角处数']} 处 · 接料 {g['拼板接料处数']} 处<br>
+          焊缝 {r['工艺口径']['焊缝米数']:.3f} m
+        </div>
+      </div>"""
+
+    d_cost = ZB["总成本"] - PZ["总成本"]
+    d_price = ZB["单套报价"] - PZ["单套报价"]
+    body = f"""
+  <h2>同一句"单包"，差 {d_price:,.0f} 元</h2>
+  <div class="sub" style="margin-top:12px;font-size:23px;">
+    同一个洞口、同一种材料、同一个包法，变量只有"怎么做"（成本差 {d_cost:,.0f}，加成后 {d_price:,.0f}）
+  </div>
+  <div style="display:flex;gap:22px;margin-top:30px;">
+    {block(PZ, "拼焊", "分件下料 · 拼角焊", "var(--ink)")}
+    {block(ZB, "整包", "一块板折成 П 形", "var(--blue)")}
+  </div>
+  <div style="margin-top:28px;font-size:23px;line-height:1.95;">
+    客户买的是"没有拼角焊缝"。<br>
+    <span style="color:var(--mute);">代价：整包板长 2×2100+1000+2×240+30 = 5710mm，<br>
+    标准板最长 3000mm，必然接料 —— 所以整包不是"高端就选它"。</span><br>
+    这句话不写在报价单上，客户就只能比较两个数字。
+  </div>"""
+    return card(body, "差价不藏在价格里，藏在措辞里")
+
+
+# ---------------------------------------------------------------- 4 七项成本
+def c4():
+    rows_src = [s for s in A["算式"] if s["金额"] is not None and s["名称"] != "建议报价"]
+    rows = ""
+    for s in rows_src:
+        rows += f"""
+      <div style="display:grid;grid-template-columns:132px 1fr 124px;gap:14px;
+                  align-items:baseline;padding:15px 0;border-bottom:1px solid var(--line);">
+        <div style="font-size:24px;">{s['名称'].replace('费','')}</div>
+        <div class="mono" style="font-size:15.5px;color:var(--mute);line-height:1.55;">{s['算式']}</div>
+        <div class="mono" style="font-size:23px;text-align:right;">{s['金额']:,.2f}</div>
+      </div>"""
+
+    body = f"""
+  <h2>七项成本，逐项带算式</h2>
+  <div class="sub" style="margin-top:10px;font-size:22px;">
+    1000×2100 · 墙厚 240 · 304/1.0 · 拉丝 · 双包 · 拼焊
+  </div>
+  <div class="rule" style="margin:20px 0 4px;"></div>
+  {rows}
+  <div style="display:flex;justify-content:space-between;align-items:baseline;
+              border-top:2px solid var(--ink);margin-top:14px;padding-top:14px;">
+    <div style="font-size:27px;">总成本</div>
+    <div class="mono" style="font-size:38px;">￥{A['总成本']:,.2f}</div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;">
+    <div style="font-size:20px;color:var(--mute);">× (1 + 加成 30%)，取整到元</div>
+    <div class="mono" style="font-size:31px;color:var(--rust);">报价 ￥{A['单套报价']:,.0f}</div>
+  </div>"""
+    return card(body, "价表自己回填 · 算式印在结果里")
+
+
+CARDS = [("tiechi-1", c1), ("tiechi-2", c2), ("tiechi-3", c3), ("tiechi-4", c4)]
 
 
 def main():
