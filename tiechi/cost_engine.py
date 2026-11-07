@@ -34,7 +34,7 @@ def default_inputs():
         "wall_d": 240.0,           # 墙厚 mm（决定抱墙折边，价差主因）
         "quantity": 1,             # 套数（批量摊薄物流与差旅）
         # ---- 品类 ----
-        "product": "门套",          # 门套 / 窗套 / 装饰线条（壁龛、屏风 A3）
+        "product": "门套",          # 门套 / 窗套 / 装饰线条（壁龛、屏风待接）
         "has_window_sill": False,  # 窗套是否含窗台板
         # ---- 装饰线条（仅 product=装饰线条 时生效）----
         "line_dev_w": 40.0,        # 摊平宽 mm（板料摊开总宽）
@@ -107,7 +107,7 @@ def calculate(inp=None, pb=None):
         c_bend = (geo["bend_m"] * bend_cfg["直边折边元每米"]
                   + geo["roll_m"] * bend_cfg["滚弯元每米"]) * q
 
-    # ---------- 2.5 刨槽费（V9）：槽长 ≈ 折弯米数，刨槽后内角近直角 ----------
+    # ---------- 2.5 刨槽费：槽长 ≈ 折弯米数，刨槽后内角近直角 ----------
     c_groove = 0.0
     if inp.get("grooved"):
         c_groove = geo["bend_m"] * bend_cfg.get("刨槽元每米", 0.0) * q
