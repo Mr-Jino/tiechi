@@ -175,7 +175,55 @@ def c4():
     return card(body, "github.com/Mr-Jino/tiechi", "价表请自己回填")
 
 
-CARDS = [("tiechi-1", c1), ("tiechi-2", c2), ("tiechi-3", c3), ("tiechi-4", c4)]
+# ------------------------------------------------------------ 4b 缺的三个数字
+def c4b():
+    g = A["几何"]
+    hole = BASE["opening_w"] * BASE["opening_h"] / 1e6      # 洞口面积 ㎡
+    dev = g["单套展开面积㎡"]
+    price = A["单套报价"]
+
+    def row(no, ask, val, unit, hidden):
+        return f"""
+      <div style="border-top:1px solid var(--line);padding:26px 0 22px;">
+        <div style="display:flex;align-items:baseline;gap:18px;">
+          <div class="mono" style="font-size:22px;color:var(--mute);width:34px;">{no}</div>
+          <div style="font-size:33px;font-weight:600;">{ask}</div>
+          <div style="flex:1;"></div>
+          <div class="mono" style="font-size:44px;">{val}<span style="font-size:22px;color:var(--mute);"> {unit}</span></div>
+        </div>
+        <div class="mono" style="font-size:20px;color:var(--mute);margin-top:10px;padding-left:52px;">
+          {hidden}
+        </div>
+      </div>"""
+
+    rows = (
+        row("01", "展开面积", f"{dev:.3f}", "㎡",
+            f"报价只写“按洞口 {hole:.2f} ㎡”—— 摊平后的面积是洞口的 {dev/hole:.2f} 倍")
+        + row("02", "焊缝米数", f"{A['工艺口径']['焊缝米数']:.2f}", "m",
+              f"报价只写“{A['工艺口径']['拼角处数']} 处拼角”—— 处不是长度，估不出焊接费")
+        + row("03", "损耗率", f"{g['损耗率']*100:.0f}", "%",
+              f"报价单里没有这一项 —— 它按 {g['含损耗用料面积㎡合计']:.2f} ㎡ 买料，"
+              f"按 {dev:.2f} ㎡ 收钱")
+    )
+
+    body = f"""
+  <h2>一张报价单，缺三个数字</h2>
+  <div class="sub" style="margin-top:12px;font-size:23px;">缺了它们，总价是对的也是对的，错的也是对的</div>
+  {rows}
+  <div style="border-top:2px solid var(--ink);padding-top:22px;margin-top:6px;">
+    <div style="font-size:23px;line-height:1.95;">
+      于是同一个 <span class="mono">￥{price:,.0f}</span>，可以写成
+      <b class="mono" style="color:var(--rust)">￥{price/hole:,.0f}/㎡</b>（按洞口），<br>
+      也可以说成 <b class="mono" style="color:var(--rust)">￥{price/dev:,.0f}/㎡</b>（按展开）
+      —— 差 {dev/hole:.2f} 倍。<br>
+      <span style="color:var(--mute);">两家比单价，分母都不是一个东西，比的是笔误。</span>
+    </div>
+  </div>"""
+    return card(body, "三个都是硬数，一问就现形", "github.com/Mr-Jino/tiechi")
+
+
+CARDS = [("tiechi-1", c1), ("tiechi-2", c2), ("tiechi-3", c3),
+         ("tiechi-4", c4), ("tiechi-4b", c4b)]
 
 
 def main():
